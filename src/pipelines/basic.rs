@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use rayon::prelude::*;
 
 #[allow(unused_assignments)]
-fn process_batch(items: Vec<String>) -> Vec<String> {
+fn schema_101(items: Vec<String>) -> Vec<String> {
     let result = items
         .par_iter()
         .map(|elem| {
@@ -11,8 +11,11 @@ fn process_batch(items: Vec<String>) -> Vec<String> {
             tmp = remove_newlines(elem.to_string());
             tmp = remove_urls(tmp);
             tmp = remove_emails(tmp);
-
-            tmp = remove_infrequent_punctuations(tmp);
+            tmp = remove_html(tmp);
+            tmp = remove_xml(tmp);
+            tmp = remove_emoticons(tmp);
+            tmp = remove_emojis(tmp);
+            // tmp = remove_infrequent_punctuations(tmp);
             tmp = merge_spaces(tmp);
             return tmp;
         })
@@ -22,8 +25,8 @@ fn process_batch(items: Vec<String>) -> Vec<String> {
 
 #[pyfunction]
 #[allow(unused_assignments)]
-pub fn run_basic(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    let result = process_batch(string_list);
+pub fn process_schema_101(string_list: Vec<String>) -> PyResult<Vec<String>> {
+    let result = schema_101(string_list);
     return Ok(result);
 }
 
@@ -34,7 +37,7 @@ mod tests {
     #[test]
     fn test_run_basic() -> PyResult<()> {
         Python::with_gil(|_py| {
-            let res = run_basic(vec!["hello\t\n".to_string()]).unwrap();
+            let res = process_schema_101(vec!["hello\t\n".to_string()]).unwrap();
             assert_eq!(res, vec!["hello".to_string()]);
             Ok(())
         })

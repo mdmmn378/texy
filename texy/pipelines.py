@@ -1,11 +1,11 @@
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from ._internal import run_basic  # pyright: ignore
+from ._internal import process_schema_101  # pyright: ignore
 
 
 def set_seq(batch, idx):
-    return idx, run_basic(batch)
+    return idx, process_schema_101(batch)
 
 
 def run_101(data, multiprocess=True):
