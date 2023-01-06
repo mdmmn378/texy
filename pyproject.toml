@@ -3,6 +3,11 @@ name = "texy"
 description = "Supercharge text processing"
 readme = "README.md"
 requires-python = ">=3.6"
+version = "0.0.1-alpha"
+authors = [
+  { name="Mamunur Rahaman Mamun", email="mdmmn378@gmail.com" },
+]
+dependencies = ["cffi"]
 
 [project.urls]
 homepage = "https://github.com/mdmmn378/texy"
