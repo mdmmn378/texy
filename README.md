@@ -2,6 +2,8 @@
 
 ---
 
+[![Python](https://github.com/mdmmn378/texy/actions/workflows/build-publish.yaml/badge.svg)](https://github.com/mdmmn378/texy/actions/workflows/build-publish.yaml)
+
 > Do text processing without getting your hands dirty
 
 ## Installation
