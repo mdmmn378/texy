@@ -1,6 +1,0 @@
-{
-    "rust-analyzer.cargo.noDefaultFeatures": true,
-    "terminal.integrated.env.osx": {
-        "DYLD_LIBRARY_PATH": "${env:CONDA_PREFIX}/lib:$(env:PATH)"
-    }
-}

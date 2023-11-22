@@ -1,31 +1,30 @@
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from ._internal import process_schema_101  # pyright: ignore
+from .texy import extreme_clean, relaxed_clean, strict_clean  # noqa: F401
 
 
-def set_seq(batch, idx):
-    return idx, process_schema_101(batch)
+def _apply_strategy(strategy, batch, idx):
+    return idx, strategy(batch)
 
 
-def run_101(data, multiprocess=True):
-    if multiprocess:
-        cpus = multiprocessing.cpu_count()
-    else:
-        cpus = 1
-    batch_size = max(len(data) // cpus, 1)
-    if len(data) < cpus * (2**4):
-        cpus = 1
+def parallelize(strategy, data, max_workers=None):
+    if not max_workers:
+        max_workers = multiprocessing.cpu_count()
+    batch_size = max(len(data) // max_workers, 1)
+    if len(data) < max_workers * (2**4):
+        max_workers = 1
     futures = []
     store = []
-    with ProcessPoolExecutor(max_workers=cpus) as executor:
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
         for i in range(0, len(data), batch_size):
             batch = data[i : i + batch_size]
-            futures.append(executor.submit(set_seq, batch, i))
+            futures.append(executor.submit(_apply_strategy, strategy, batch, i))
         for future in as_completed(futures):
             try:
                 store.append(future.result())
-            except:
+            except Exception as e:
+                print(e)
                 raise "Failed to process data!"
     store = sorted(store, key=lambda x: x[0])
     result = []
