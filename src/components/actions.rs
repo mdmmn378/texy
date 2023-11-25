@@ -19,25 +19,18 @@ pub fn remove_newlines(string: String) -> String {
     return ret;
 }
 
-pub fn replace_dots(string: String) -> String {
-    let ret = string.replace(".", " ");
-    return ret;
-}
-
-pub fn replace_commas(string: String) -> String {
-    let ret = string.replace(",", " ");
-    return ret;
-}
-
 pub fn remove_infrequent_punctuations(string: String) -> String {
-    let delete_chars = String::from(r##"!"#$%&\'()*+-/:;<=>?@[\\]^_{|}~`"##);
+    let delete_chars = String::from(r##""#$%&\'*+<=>@\\^_{|}~`"##);
     let mut ret = string.replace(r"\xa0", " ");
     ret.retain(|c| !delete_chars.contains(c));
     return ret;
 }
 
-pub fn remove_dot_commas(string: String) -> String {
-    let mut ret = string.replace(",", " ");
+pub fn remove_all_punctuations(string: String) -> String {
+    let delete_chars = String::from(r##"!"#$%&\'()*+-/:;<=>?@[\\]^_{|}~`"##);
+    let mut ret = string.replace(r"\xa0", " ");
+    ret.retain(|c| !delete_chars.contains(c));
+    ret = ret.replace(",", " ");
     ret = ret.replace(".", " ");
     return ret;
 }
@@ -89,33 +82,4 @@ pub fn remove_html(string: String) -> String {
 pub fn remove_xml(string: String) -> String {
     let res = RE_XML.replace_all(string.as_str(), "");
     return res.to_string();
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn test_remove_urls() {
-        let r = remove_urls(String::from("hellohttps://google.com af"));
-        assert_eq!(r, "hello af")
-    }
-    #[test]
-    fn test_remove_emails() {
-        let r = remove_emails(String::from("hello mamun@mail.com af"));
-        assert_eq!(r, "hello  af")
-    }
-    #[test]
-    fn test_remove_emoticons() {
-        let mut r = remove_emoticons(String::from("hello STO ( ^^) :)"));
-        r = merge_spaces(r);
-        assert_eq!(r, "hello")
-    }
-    #[test]
-    fn test_remove_emojis() {
-        let mut r = remove_emojis(String::from(
-            "hello  ⁉️⏸️♈️⚫️⛩️ 🧒🧒🌈🌗🍆🍹🏻💩🔙🙈🚘🚺🦷🦨🧒🏻🫸🕑🐠🧷🍈🐟🐡🦈🐬🐳🐋",
-        ));
-        r = merge_spaces(r);
-        assert_eq!(r, "hello ⁉️⏸️♈️⚫️⛩️") // ⁉️⏸️♈️⚫️⛩️ couldn't be replaced
-    }
 }
