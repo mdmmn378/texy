@@ -27,4 +27,4 @@ build-dev:
 
 build-release:
 	@echo "Building release..."
-	-maturin develop --release
+	-maturin build --release

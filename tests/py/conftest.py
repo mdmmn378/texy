@@ -24,7 +24,7 @@ def strict_output():
         "This is an HTML paragraph.",
         "This is some XML content.",
         "Removing emoticons and emojis",
-        "This text has infrequent punctuations: !?#",
+        "This text has infrequent punctuations: !?",
         "Multiple spaces between words.",
     ]
 

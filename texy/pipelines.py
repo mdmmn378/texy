@@ -31,7 +31,7 @@ def parallelize(
                 store.append(future.result())
             except Exception as e:  # TODO: specify exception
                 print(e)
-                raise e
+                raise Exception("Exception occurred")
     store = sorted(store, key=lambda x: x[0])
     result: List[str] = []
     for i in store:

@@ -3,27 +3,7 @@ use pyo3::prelude::*;
 use rayon::prelude::*;
 
 #[allow(unused_assignments)]
-fn strict(items: Vec<String>) -> Vec<String> {
-    let result = items
-        .par_iter()
-        .map(|elem| {
-            let mut tmp = String::new();
-            tmp = remove_newlines(elem.to_string());
-            tmp = remove_urls(tmp);
-            tmp = remove_emails(tmp);
-            tmp = remove_html(tmp);
-            tmp = remove_xml(tmp);
-            tmp = remove_emoticons(tmp);
-            tmp = remove_emojis(tmp);
-            tmp = merge_spaces(tmp);
-            return tmp;
-        })
-        .collect();
-    return result;
-}
-
-#[allow(unused_assignments)]
-fn relaxed(items: Vec<String>) -> Vec<String> {
+pub fn relaxed(items: Vec<String>) -> Vec<String> {
     let result = items
         .par_iter()
         .map(|elem| {
@@ -39,7 +19,7 @@ fn relaxed(items: Vec<String>) -> Vec<String> {
 }
 
 #[allow(unused_assignments)]
-fn extreme(items: Vec<String>) -> Vec<String> {
+pub fn strict(items: Vec<String>) -> Vec<String> {
     let result = items
         .par_iter()
         .map(|elem| {
@@ -52,7 +32,27 @@ fn extreme(items: Vec<String>) -> Vec<String> {
             tmp = remove_emoticons(tmp);
             tmp = remove_emojis(tmp);
             tmp = remove_infrequent_punctuations(tmp);
-            tmp = remove_dot_commas(tmp);
+            tmp = merge_spaces(tmp);
+            return tmp;
+        })
+        .collect();
+    return result;
+}
+
+#[allow(unused_assignments)]
+pub fn extreme(items: Vec<String>) -> Vec<String> {
+    let result = items
+        .par_iter()
+        .map(|elem| {
+            let mut tmp = String::new();
+            tmp = remove_newlines(elem.to_string());
+            tmp = remove_urls(tmp);
+            tmp = remove_emails(tmp);
+            tmp = remove_html(tmp);
+            tmp = remove_xml(tmp);
+            tmp = remove_emoticons(tmp);
+            tmp = remove_emojis(tmp);
+            tmp = remove_all_punctuations(tmp);
             tmp = merge_spaces(tmp);
             return tmp;
         })
@@ -62,15 +62,15 @@ fn extreme(items: Vec<String>) -> Vec<String> {
 
 #[pyfunction]
 #[allow(unused_assignments)]
-pub fn strict_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    let result = strict(string_list);
+pub fn relaxed_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
+    let result = relaxed(string_list);
     return Ok(result);
 }
 
 #[pyfunction]
 #[allow(unused_assignments)]
-pub fn relaxed_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    let result = relaxed(string_list);
+pub fn strict_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
+    let result = strict(string_list);
     return Ok(result);
 }
 
