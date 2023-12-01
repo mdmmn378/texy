@@ -1,5 +1,5 @@
 .SHELL := /bin/bash
-.PHONY: all format lint test test-rs build-dev build-release
+.PHONY: all format lint test test-rs build-dev build-release profile
 
 all: lint format test test-rs
 	@echo "All done!"
@@ -28,3 +28,7 @@ build-dev:
 build-release:
 	@echo "Building release..."
 	-maturin build --release
+
+profile:
+	@echo "Profiling..."
+	-python -m tests.profiler
