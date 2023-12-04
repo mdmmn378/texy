@@ -23,7 +23,7 @@ test-rs:
 
 build-dev:
 	@echo "Building dev..."
-	-maturin develop
+	-maturin develop --release
 
 build-release:
 	@echo "Building release..."
