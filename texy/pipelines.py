@@ -16,7 +16,7 @@ def _apply_strategy(
 def parallelize(
     strategy: Callable[[List[str]], List[str]], data: List[str], max_workers: int
 ) -> List[str]:
-    """Using this function is not recommended for most of the cases."""
+    """Parallelize a pipeline with Python multiprocessing."""
     if not max_workers:
         max_workers = multiprocessing.cpu_count()
     batch_size: int = max(len(data) // max_workers, 1)
