@@ -1,5 +1,5 @@
 .SHELL := /bin/bash
-.PHONY: all format lint test test-rs build-dev build-release
+.PHONY: all format lint test test-rs build-dev build-release profile type
 
 all: lint format test test-rs
 	@echo "All done!"
@@ -23,8 +23,17 @@ test-rs:
 
 build-dev:
 	@echo "Building dev..."
-	-maturin develop
+	-maturin develop --release
 
 build-release:
 	@echo "Building release..."
 	-maturin build --release
+
+profile:
+	@echo "Profiling..."
+	-python -m tests.profiler
+
+
+type:
+	@echo "Running type checker (pyright 1.1.340) ..."
+	pyright src/

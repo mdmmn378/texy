@@ -1,0 +1,10 @@
+pre-commit:
+  commands:
+    lint:
+      run: make lint
+    format:
+      run: make format
+    type-check:
+      run: make type
+    update:
+      run: git update-index --again
