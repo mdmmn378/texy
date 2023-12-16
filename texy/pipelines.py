@@ -2,7 +2,9 @@ import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Callable, List, Tuple
 
-from .texy import extreme_clean, relaxed_clean, strict_clean  # noqa: F401
+from .texy import extreme_clean as _extreme_clean
+from .texy import relaxed_clean as _relaxed_clean
+from .texy import strict_clean as _strict_clean
 
 
 def _apply_strategy(
@@ -37,3 +39,18 @@ def parallelize(
     for i in store:
         result.extend(i[1])
     return result
+
+
+def extreme_clean(data: List[str]) -> List[str]:
+    """Extreme cleaning pipeline."""
+    return parallelize(_extreme_clean, data, 0)
+
+
+def strict_clean(data: List[str]) -> List[str]:
+    """Strict cleaning pipeline."""
+    return parallelize(_strict_clean, data, 0)
+
+
+def relaxed_clean(data: List[str]) -> List[str]:
+    """Relaxed cleaning pipeline."""
+    return parallelize(_relaxed_clean, data, 0)

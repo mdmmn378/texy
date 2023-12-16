@@ -1,7 +1,7 @@
-from memory_profiler import profile
-
-import gc
 import copy
+import gc
+
+from memory_profiler import profile
 
 
 def dummy_clean(data):
