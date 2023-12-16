@@ -1,11 +1,10 @@
 use crate::components::actions::*;
 use pyo3::prelude::*;
-use rayon::prelude::*;
 
 #[allow(unused_assignments)]
 pub fn relaxed(items: Vec<String>) -> Vec<String> {
     let result = items
-        .par_iter()
+        .iter()
         .map(|elem| {
             let mut tmp = String::new();
             tmp = remove_newlines(elem.to_string());
@@ -21,7 +20,7 @@ pub fn relaxed(items: Vec<String>) -> Vec<String> {
 #[allow(unused_assignments)]
 pub fn strict(items: Vec<String>) -> Vec<String> {
     let result = items
-        .par_iter()
+        .iter()
         .map(|elem| {
             let mut tmp = String::new();
             tmp = remove_newlines(elem.to_string());
@@ -42,7 +41,7 @@ pub fn strict(items: Vec<String>) -> Vec<String> {
 #[allow(unused_assignments)]
 pub fn extreme(items: Vec<String>) -> Vec<String> {
     let result = items
-        .par_iter()
+        .iter()
         .map(|elem| {
             let mut tmp = String::new();
             tmp = remove_newlines(elem.to_string());

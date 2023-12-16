@@ -7,7 +7,7 @@ from typing import Callable, List
 def parallelize(
     strategy: Callable[[List[str]], List[str]], data: List[str], max_workers: int
 ) -> List[str]:
-    """Using this function is not recommended for most of the cases."""
+    """Parallelize a pipeline with Python multiprocessing."""
     ...
 
 def relaxed_clean(data: List[str]) -> List[str]: ...

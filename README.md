@@ -2,7 +2,7 @@
 
 ---
 
-[![Python](https://github.com/mdmmn378/texy/actions/workflows/build-publish.yaml/badge.svg)](https://github.com/mdmmn378/texy/actions/workflows/build-publish.yaml)
+[![Python](https://github.com/mdmmn378/texy/actions/workflows/build-publish.yaml/badge.svg)](https://github.com/mdmmn378/texy/actions/workflows/build-publish.yaml) ![PyPI - Version](https://img.shields.io/pypi/v/texy)
 
 > A utility library for quickly cleaning texts
 
