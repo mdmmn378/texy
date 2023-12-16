@@ -12,13 +12,12 @@ regex = "1.7.0"
 lazy_static = "1.4.0"
 serde_json = "1.0.89"
 rayon = "1.6.1"
-procspawn = "0.10.1"
+procspawn = "1.0.0"
 
 [dependencies.pyo3]
-version = "0.19.0"
+version = "0.20.0"
 features = ["abi3-py311"]
 
 [features]
 extension-module = ["pyo3/extension-module"]
 default = ["extension-module"]
-
