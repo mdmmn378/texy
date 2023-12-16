@@ -9,7 +9,6 @@ lazy_static! {
         r#"[\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F700-\U0001F77F\U0001F780-\U0001F7FF\U0001F800-\U0001F8FF\U0001F900-\U0001F9FF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF\U00002702-\U000027B0]"#
     )
     .unwrap();
-    pub static ref EMOTICONS: Vec<String> = get_emoticons();
     pub static ref RE_HTML: Regex = Regex::new(r"<[^>]*>").unwrap();
     pub static ref RE_XML: Regex = Regex::new(r"<[/]?[^>]+>").unwrap();
 }
@@ -58,7 +57,7 @@ pub fn remove_emojis(string: String) -> String {
 
 pub fn remove_emoticons(string: String) -> String {
     let mut res = string.clone();
-    for emo in EMOTICONS.iter() {
+    for emo in get_emoticons().iter() {
         res = res.replace(emo.as_str(), " ");
     }
     return res.to_string();
