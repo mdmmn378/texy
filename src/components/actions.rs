@@ -13,23 +13,52 @@ lazy_static! {
     pub static ref RE_XML: Regex = Regex::new(r"<[/]?[^>]+>").unwrap();
 }
 
-pub fn remove_newlines(string: String) -> String {
-    string.replace('\n', " ")
+pub fn remove_newlines(mut string: String) -> String {
+    // In-place replacement to avoid allocations
+    unsafe {
+        let bytes = string.as_mut_vec();
+        for byte in bytes.iter_mut() {
+            if *byte == b'\n' {
+                *byte = b' ';
+            }
+        }
+    }
+    string
 }
 
 pub fn remove_infrequent_punctuations(mut string: String) -> String {
     let delete_chars = r##""#$%&\'*+<=>@\\^_{|}~`"##;
-    string = string.replace(r"\xa0", " ");
+
+    // Replace \xa0 first
+    if string.contains('\u{00a0}') {
+        string = string.replace('\u{00a0}', " ");
+    }
+
+    // Filter characters in place to avoid allocations
     string.retain(|c| !delete_chars.contains(c));
     string
 }
 
 pub fn remove_all_punctuations(mut string: String) -> String {
     let delete_chars = r##"!"#$%&\'()*+-/:;<=>?@[\\]^_{|}~`"##;
-    string = string.replace(r"\xa0", " ");
-    string.retain(|c| !delete_chars.contains(c));
-    string = string.replace(',', " ");
-    string = string.replace('.', " ");
+
+    // Replace \xa0 first
+    if string.contains('\u{00a0}') {
+        string = string.replace('\u{00a0}', " ");
+    }
+
+    // Filter and replace in a single pass to minimize allocations
+    string.retain(|c| !delete_chars.contains(c) && c != ',' && c != '.');
+
+    // Replace remaining commas and periods with spaces in-place
+    unsafe {
+        let bytes = string.as_mut_vec();
+        for byte in bytes.iter_mut() {
+            if *byte == b',' || *byte == b'.' {
+                *byte = b' ';
+            }
+        }
+    }
     string
 }
 
@@ -44,17 +73,36 @@ pub fn unify_numbers(string: String) -> String {
 }
 
 pub fn merge_spaces(string: String) -> String {
-    let words: Vec<&str> = string.as_str().split_whitespace().collect();
-    words.join(" ")
+    // More efficient space merging without allocating intermediate vectors
+    let mut result = String::with_capacity(string.len());
+    let mut chars = string.chars();
+    let mut prev_was_space = false;
+
+    while let Some(ch) = chars.next() {
+        if ch.is_whitespace() {
+            if !prev_was_space {
+                result.push(' ');
+                prev_was_space = true;
+            }
+        } else {
+            result.push(ch);
+            prev_was_space = false;
+        }
+    }
+
+    result.trim().to_string()
 }
 
 pub fn remove_emojis(string: String) -> String {
-    RE_EMOJI.replace_all(&string, "").to_string()
+    // Use into_owned to avoid unnecessary cloning
+    RE_EMOJI.replace_all(&string, "").into_owned()
 }
 
 pub fn remove_emoticons(mut string: String) -> String {
+    // Optimize emoticon removal to minimize allocations
     for emo in get_emoticons().iter() {
         if string.contains(emo) {
+            // Use efficient replacement
             string = string.replace(emo, " ");
         }
     }

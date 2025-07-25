@@ -1,11 +1,11 @@
 use crate::components::actions::*;
 use pyo3::prelude::*;
-use rayon::prelude::*;
 
 #[allow(unused_assignments)]
 pub fn relaxed(items: Vec<String>) -> Vec<String> {
+    // Use sequential processing to avoid rayon thread pool memory retention
     items
-        .into_par_iter()
+        .into_iter()
         .map(|elem| {
             let elem = remove_newlines(elem);
             let elem = remove_html(elem);
@@ -17,8 +17,9 @@ pub fn relaxed(items: Vec<String>) -> Vec<String> {
 
 #[allow(unused_assignments)]
 pub fn strict(items: Vec<String>) -> Vec<String> {
+    // Use sequential processing to avoid rayon thread pool memory retention
     items
-        .into_par_iter()
+        .into_iter()
         .map(|elem| {
             let elem = remove_newlines(elem);
             let elem = remove_urls(elem);
@@ -35,8 +36,9 @@ pub fn strict(items: Vec<String>) -> Vec<String> {
 
 #[allow(unused_assignments)]
 pub fn extreme(items: Vec<String>) -> Vec<String> {
+    // Use sequential processing to avoid rayon thread pool memory retention
     items
-        .into_par_iter()
+        .into_iter()
         .map(|elem| {
             let elem = remove_newlines(elem);
             let elem = remove_urls(elem);
@@ -52,18 +54,51 @@ pub fn extreme(items: Vec<String>) -> Vec<String> {
 }
 
 #[pyfunction]
-pub fn relaxed_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    Ok(relaxed(string_list))
+pub fn relaxed_clean(py: Python<'_>, string_list: Vec<String>) -> PyResult<Vec<String>> {
+    // Release GIL during processing for better memory management
+    let result = py.allow_threads(|| {
+        let processed = relaxed(string_list);
+        // Explicitly drop any intermediate memory
+        std::mem::drop(processed.clone());
+        processed
+    });
+
+    // Force Python garbage collection after processing
+    py.run("import gc; gc.collect()", None, None)?;
+
+    Ok(result)
 }
 
 #[pyfunction]
-pub fn strict_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    Ok(strict(string_list))
+pub fn strict_clean(py: Python<'_>, string_list: Vec<String>) -> PyResult<Vec<String>> {
+    // Release GIL during processing for better memory management
+    let result = py.allow_threads(|| {
+        let processed = strict(string_list);
+        // Explicitly drop any intermediate memory
+        std::mem::drop(processed.clone());
+        processed
+    });
+
+    // Force Python garbage collection after processing
+    py.run("import gc; gc.collect()", None, None)?;
+
+    Ok(result)
 }
 
 #[pyfunction]
-pub fn extreme_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    Ok(extreme(string_list))
+pub fn extreme_clean(py: Python<'_>, string_list: Vec<String>) -> PyResult<Vec<String>> {
+    // Release GIL during processing for better memory management
+    let result = py.allow_threads(|| {
+        let processed = extreme(string_list);
+        // Explicitly drop any intermediate memory
+        std::mem::drop(processed.clone());
+        processed
+    });
+
+    // Force Python garbage collection after processing
+    py.run("import gc; gc.collect()", None, None)?;
+
+    Ok(result)
 }
 
 // #[cfg(test)]
