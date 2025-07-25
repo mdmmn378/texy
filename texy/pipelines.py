@@ -23,24 +23,26 @@ def _apply_strategy(
         raise e
 
 
-def parallelize(
-    strategy: Callable[[List[str]], List[str]], data: List[str], max_workers: int
-) -> List[str]:
-    """Parallelize a pipeline with Python multiprocessing and aggressive memory management."""
-    if not max_workers:
-        max_workers = multiprocessing.cpu_count()
+def parallelize(strategy: Callable, data: List[str], max_workers: int = 0) -> List[str]:
+    """
+    Ultra-memory-efficient parallel processing.
+    """
+    if not data:
+        return []
     
-    batch_size: int = max(len(data) // max_workers, 1)
+    # For small datasets, use direct processing to avoid multiprocessing overhead
+    if len(data) < 1000:
+        return strategy(data)
     
-    # For small datasets, don't use multiprocessing to avoid overhead
-    if len(data) < max_workers * 16:  # Increased threshold
-        try:
-            result = strategy(data)
-            return result
-        finally:
-            # Force multiple garbage collection cycles
-            for _ in range(3):
-                gc.collect()
+    if max_workers == 0:
+        max_workers = min(4, (multiprocessing.cpu_count() or 1))  # Limit workers
+    
+    # Use smaller batches to reduce memory pressure
+    batch_size = max(100, len(data) // (max_workers * 4))
+    
+    # Force cleanup before processing
+    for _ in range(3):
+        gc.collect()
     
     # Process data in smaller chunks to reduce memory pressure
     futures: List[Any] = []
@@ -48,34 +50,41 @@ def parallelize(
     
     try:
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            # Submit batches
             for i in range(0, len(data), batch_size):
                 batch = data[i : i + batch_size]
                 futures.append(executor.submit(_apply_strategy, strategy, batch, i))
             
+            # Process results immediately to reduce memory buildup
             for future in as_completed(futures):
                 try:
-                    store.append(future.result())
+                    result = future.result()
+                    store.append(result)
+                    # Force cleanup after each result
+                    del result
+                    gc.collect()
                 except Exception as e:
                     print(f"Error processing batch: {e}")
                     raise Exception(f"Exception occurred: {e}")
-        
-        # Sort and combine results
-        store.sort(key=lambda x: x[0])
-        result: List[str] = []
-        for i in store:
-            result.extend(i[1])
-        
-        return result
-        
+                    
+    except Exception as e:
+        raise e
     finally:
-        # Aggressive cleanup of intermediate data
-        if 'store' in locals():
-            del store
-        if 'futures' in locals():
-            del futures
-        # Force multiple garbage collection cycles
-        for _ in range(3):
+        # Aggressive cleanup
+        for _ in range(5):
             gc.collect()
+    
+    # Sort results by batch index and flatten
+    store.sort(key=lambda x: x[0])  # Sort by batch index
+    result = []
+    for _, data_batch in store:
+        result.extend(data_batch)
+    
+    # Final cleanup
+    del store
+    gc.collect()
+    
+    return result
 
 
 def extreme_clean(data: List[str]) -> List[str]:

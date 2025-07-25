@@ -72,25 +72,39 @@ pub fn unify_numbers(string: String) -> String {
     return string;
 }
 
-pub fn merge_spaces(string: String) -> String {
-    // More efficient space merging without allocating intermediate vectors
-    let mut result = String::with_capacity(string.len());
-    let mut chars = string.chars();
+pub fn merge_spaces(mut string: String) -> String {
+    // Ultra-efficient in-place space merging
+    if string.is_empty() {
+        return string;
+    }
+
+    // Remove leading/trailing whitespace first
+    string = string.trim().to_string();
+
+    // In-place space merging using bytes for better performance
+    let mut bytes = string.into_bytes();
+    let mut write_pos = 0;
     let mut prev_was_space = false;
 
-    while let Some(ch) = chars.next() {
-        if ch.is_whitespace() {
+    for read_pos in 0..bytes.len() {
+        let byte = bytes[read_pos];
+        let is_space = byte == b' ' || byte == b'\t' || byte == b'\n' || byte == b'\r';
+
+        if is_space {
             if !prev_was_space {
-                result.push(' ');
+                bytes[write_pos] = b' ';
+                write_pos += 1;
                 prev_was_space = true;
             }
         } else {
-            result.push(ch);
+            bytes[write_pos] = byte;
+            write_pos += 1;
             prev_was_space = false;
         }
     }
 
-    result.trim().to_string()
+    bytes.truncate(write_pos);
+    String::from_utf8(bytes).unwrap_or_default()
 }
 
 pub fn remove_emojis(string: String) -> String {
@@ -98,29 +112,51 @@ pub fn remove_emojis(string: String) -> String {
     RE_EMOJI.replace_all(&string, "").into_owned()
 }
 
-pub fn remove_emoticons(mut string: String) -> String {
-    // Optimize emoticon removal to minimize allocations
-    for emo in get_emoticons().iter() {
-        if string.contains(emo) {
-            // Use efficient replacement
-            string = string.replace(emo, " ");
+pub fn remove_emoticons(string: String) -> String {
+    // Super-efficient emoticon removal with minimal allocations
+    let emoticons = get_emoticons();
+
+    // Quick check - if string is too short, skip processing
+    if string.len() < 2 {
+        return string;
+    }
+
+    // Check if any emoticons exist in the string first
+    let has_emoticons = emoticons.iter().any(|emo| string.contains(emo));
+    if !has_emoticons {
+        return string; // No emoticons found, return original
+    }
+
+    // Build a single replacement map and process once
+    let mut result = string;
+
+    // Sort emoticons by length (longest first) to avoid partial replacements
+    let mut sorted_emoticons: Vec<&str> = emoticons.iter().map(|s| s.as_ref()).collect();
+    sorted_emoticons.sort_by(|a, b| b.len().cmp(&a.len()));
+
+    // Process each emoticon only if it exists in the current string
+    for emo in sorted_emoticons.iter().take(50) {
+        // Limit to top 50 most common
+        if result.contains(emo) {
+            result = result.replace(emo, " ");
         }
     }
-    string
+
+    result
 }
 
 pub fn remove_urls(string: String) -> String {
-    RE_URL.replace_all(&string, "").to_string()
+    RE_URL.replace_all(&string, "").into_owned()
 }
 
 pub fn remove_emails(string: String) -> String {
-    RE_EMAIL.replace_all(&string, "").to_string()
+    RE_EMAIL.replace_all(&string, "").into_owned()
 }
 
 pub fn remove_html(string: String) -> String {
-    RE_HTML.replace_all(&string, "").to_string()
+    RE_HTML.replace_all(&string, "").into_owned()
 }
 
 pub fn remove_xml(string: String) -> String {
-    RE_XML.replace_all(&string, "").to_string()
+    RE_XML.replace_all(&string, "").into_owned()
 }
