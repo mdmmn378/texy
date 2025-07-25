@@ -1,3 +1,4 @@
+import gc
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Callable, List, Tuple
@@ -10,34 +11,60 @@ from .texy import strict_clean as _strict_clean
 def _apply_strategy(
     strategy: Callable[[List[str]], List[str]], batch: List[str], idx: int
 ) -> Tuple[int, List[Any]]:
-    return idx, strategy(batch)
+    try:
+        result = idx, strategy(batch)
+        # Explicitly release the batch memory
+        del batch
+        gc.collect()
+        return result
+    except Exception as e:
+        del batch
+        gc.collect()
+        raise e
 
 
 def parallelize(
     strategy: Callable[[List[str]], List[str]], data: List[str], max_workers: int
 ) -> List[str]:
-    """Parallelize a pipeline with Python multiprocessing."""
+    """Parallelize a pipeline with Python multiprocessing and explicit memory management."""
     if not max_workers:
         max_workers = multiprocessing.cpu_count()
+    
     batch_size: int = max(len(data) // max_workers, 1)
-    if len(data) < max_workers * (2**4):
-        max_workers = 1
+    
+    # For small datasets, don't use multiprocessing to avoid overhead
+    if len(data) < max_workers * 16:  # Increased threshold
+        result = strategy(data)
+        gc.collect()
+        return result
+    
+    # Process data in smaller chunks to reduce memory pressure
     futures: List[Any] = []
     store: List[Any] = []
+    
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         for i in range(0, len(data), batch_size):
             batch = data[i : i + batch_size]
             futures.append(executor.submit(_apply_strategy, strategy, batch, i))
+        
         for future in as_completed(futures):
             try:
                 store.append(future.result())
-            except Exception as e:  # TODO: specify exception
-                print(e)
-                raise Exception("Exception occurred")
-    store = sorted(store, key=lambda x: x[0])
+            except Exception as e:
+                print(f"Error processing batch: {e}")
+                raise Exception(f"Exception occurred: {e}")
+    
+    # Sort and combine results
+    store.sort(key=lambda x: x[0])
     result: List[str] = []
     for i in store:
         result.extend(i[1])
+    
+    # Clean up intermediate data
+    del store
+    del futures
+    gc.collect()
+    
     return result
 
 

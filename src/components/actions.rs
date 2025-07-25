@@ -14,31 +14,29 @@ lazy_static! {
 }
 
 pub fn remove_newlines(string: String) -> String {
-    let ret = string.replace("\n", " ");
-    return ret;
+    string.replace('\n', " ")
 }
 
-pub fn remove_infrequent_punctuations(string: String) -> String {
-    let delete_chars = String::from(r##""#$%&\'*+<=>@\\^_{|}~`"##);
-    let mut ret = string.replace(r"\xa0", " ");
-    ret.retain(|c| !delete_chars.contains(c));
-    return ret;
+pub fn remove_infrequent_punctuations(mut string: String) -> String {
+    let delete_chars = r##""#$%&\'*+<=>@\\^_{|}~`"##;
+    string = string.replace(r"\xa0", " ");
+    string.retain(|c| !delete_chars.contains(c));
+    string
 }
 
-pub fn remove_all_punctuations(string: String) -> String {
-    let delete_chars = String::from(r##"!"#$%&\'()*+-/:;<=>?@[\\]^_{|}~`"##);
-    let mut ret = string.replace(r"\xa0", " ");
-    ret.retain(|c| !delete_chars.contains(c));
-    ret = ret.replace(",", " ");
-    ret = ret.replace(".", " ");
-    return ret;
+pub fn remove_all_punctuations(mut string: String) -> String {
+    let delete_chars = r##"!"#$%&\'()*+-/:;<=>?@[\\]^_{|}~`"##;
+    string = string.replace(r"\xa0", " ");
+    string.retain(|c| !delete_chars.contains(c));
+    string = string.replace(',', " ");
+    string = string.replace('.', " ");
+    string
 }
 
-pub fn remove_bn_numbers(string: String) -> String {
-    let mut ret = string.clone();
-    let bn_nums = r"০১৭২১৭৬৯৫৫০";
-    ret.retain(|c| !bn_nums.contains(c));
-    return ret;
+pub fn remove_bn_numbers(mut string: String) -> String {
+    let bn_nums = "০১৭২১৭৬৯৫৫০";
+    string.retain(|c| !bn_nums.contains(c));
+    string
 }
 
 pub fn unify_numbers(string: String) -> String {
@@ -51,34 +49,30 @@ pub fn merge_spaces(string: String) -> String {
 }
 
 pub fn remove_emojis(string: String) -> String {
-    let res = RE_EMOJI.replace_all(string.as_str(), "");
-    return res.to_string();
+    RE_EMOJI.replace_all(&string, "").to_string()
 }
 
-pub fn remove_emoticons(string: String) -> String {
-    let mut res = string.clone();
+pub fn remove_emoticons(mut string: String) -> String {
     for emo in get_emoticons().iter() {
-        res = res.replace(emo.as_str(), " ");
+        if string.contains(emo) {
+            string = string.replace(emo, " ");
+        }
     }
-    return res.to_string();
+    string
 }
 
 pub fn remove_urls(string: String) -> String {
-    let res = RE_URL.replace_all(string.as_str(), "");
-    return res.to_string();
+    RE_URL.replace_all(&string, "").to_string()
 }
 
 pub fn remove_emails(string: String) -> String {
-    let res = RE_EMAIL.replace_all(string.as_str(), "");
-    return res.to_string();
+    RE_EMAIL.replace_all(&string, "").to_string()
 }
 
 pub fn remove_html(string: String) -> String {
-    let res = RE_HTML.replace_all(string.as_str(), "");
-    return res.to_string();
+    RE_HTML.replace_all(&string, "").to_string()
 }
 
 pub fn remove_xml(string: String) -> String {
-    let res = RE_XML.replace_all(string.as_str(), "");
-    return res.to_string();
+    RE_XML.replace_all(&string, "").to_string()
 }

@@ -1,83 +1,69 @@
 use crate::components::actions::*;
 use pyo3::prelude::*;
+use rayon::prelude::*;
 
 #[allow(unused_assignments)]
 pub fn relaxed(items: Vec<String>) -> Vec<String> {
-    let result = items
-        .iter()
+    items
+        .into_par_iter()
         .map(|elem| {
-            let mut tmp = String::new();
-            tmp = remove_newlines(elem.to_string());
-            tmp = remove_html(tmp);
-            tmp = remove_xml(tmp);
-            tmp = merge_spaces(tmp);
-            return tmp;
+            let elem = remove_newlines(elem);
+            let elem = remove_html(elem);
+            let elem = remove_xml(elem);
+            merge_spaces(elem)
         })
-        .collect();
-    return result;
+        .collect()
 }
 
 #[allow(unused_assignments)]
 pub fn strict(items: Vec<String>) -> Vec<String> {
-    let result = items
-        .iter()
+    items
+        .into_par_iter()
         .map(|elem| {
-            let mut tmp = String::new();
-            tmp = remove_newlines(elem.to_string());
-            tmp = remove_urls(tmp);
-            tmp = remove_emails(tmp);
-            tmp = remove_html(tmp);
-            tmp = remove_xml(tmp);
-            tmp = remove_emoticons(tmp);
-            tmp = remove_emojis(tmp);
-            tmp = remove_infrequent_punctuations(tmp);
-            tmp = merge_spaces(tmp);
-            return tmp;
+            let elem = remove_newlines(elem);
+            let elem = remove_urls(elem);
+            let elem = remove_emails(elem);
+            let elem = remove_html(elem);
+            let elem = remove_xml(elem);
+            let elem = remove_emoticons(elem);
+            let elem = remove_emojis(elem);
+            let elem = remove_infrequent_punctuations(elem);
+            merge_spaces(elem)
         })
-        .collect();
-    return result;
+        .collect()
 }
 
 #[allow(unused_assignments)]
 pub fn extreme(items: Vec<String>) -> Vec<String> {
-    let result = items
-        .iter()
+    items
+        .into_par_iter()
         .map(|elem| {
-            let mut tmp = String::new();
-            tmp = remove_newlines(elem.to_string());
-            tmp = remove_urls(tmp);
-            tmp = remove_emails(tmp);
-            tmp = remove_html(tmp);
-            tmp = remove_xml(tmp);
-            tmp = remove_emoticons(tmp);
-            tmp = remove_emojis(tmp);
-            tmp = remove_all_punctuations(tmp);
-            tmp = merge_spaces(tmp);
-            return tmp;
+            let elem = remove_newlines(elem);
+            let elem = remove_urls(elem);
+            let elem = remove_emails(elem);
+            let elem = remove_html(elem);
+            let elem = remove_xml(elem);
+            let elem = remove_emoticons(elem);
+            let elem = remove_emojis(elem);
+            let elem = remove_all_punctuations(elem);
+            merge_spaces(elem)
         })
-        .collect();
-    return result;
+        .collect()
 }
 
 #[pyfunction]
-#[allow(unused_assignments)]
 pub fn relaxed_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    let result = relaxed(string_list);
-    return Ok(result);
+    Ok(relaxed(string_list))
 }
 
 #[pyfunction]
-#[allow(unused_assignments)]
 pub fn strict_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    let result = strict(string_list);
-    return Ok(result);
+    Ok(strict(string_list))
 }
 
 #[pyfunction]
-#[allow(unused_assignments)]
 pub fn extreme_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
-    let result = extreme(string_list);
-    return Ok(result);
+    Ok(extreme(string_list))
 }
 
 // #[cfg(test)]
