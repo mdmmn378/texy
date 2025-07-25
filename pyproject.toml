@@ -5,9 +5,10 @@ readme = "README.md"
 requires-python = ">=3.6"
 version = "0.0.2"
 authors = [{ name = "Mamunur Rahaman Mamun", email = "mdmmn378@gmail.com" }]
-dependencies = [
-    "texy",
-]
+dependencies = []
+
+[project.scripts]
+texy-memory-test = "memory_leak_detector:main"
 
 [project.urls]
 homepage = "https://github.com/mdmmn378/texy"
@@ -24,9 +25,6 @@ features = ["pyo3/extension-module"]
 profile = "black"
 
 [tool.uv]
-dev-dependencies = [
-    "maturin>=0.12.20",
-]
+dev-dependencies = ["maturin>=0.12.20"]
 
 [tool.uv.sources]
-texy = { workspace = true }

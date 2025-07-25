@@ -34,7 +34,6 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "texy", editable = "." }]
 
 [package.metadata.requires-dev]
 dev = [{ name = "maturin", specifier = ">=0.12.20" }]
