@@ -78,12 +78,21 @@ def run_single_test(pipeline_func, data: List[str], test_name: str) -> Dict[str,
     aggressive_cleanup()
     pre_memory = get_memory_mb()
     
-    # Process the data
+    # Process the data with timeout for very large datasets
     start_time = time.perf_counter()
     try:
+        # For very large datasets, add progress indication
+        data_size = len(data)
+        if data_size >= 100000:
+            print(f"[Processing {data_size:,} items...]", end="", flush=True)
+        
         result = pipeline_func(data.copy())
         success = True
         error_msg = None
+        
+        if data_size >= 100000:
+            print("", end="")  # Clear progress message
+            
     except Exception as e:
         result = []
         success = False
@@ -240,9 +249,11 @@ def print_test_report(results: List[Dict[str, Any]], analysis: Dict[str, Any], p
 def comprehensive_memory_test():
     """Run comprehensive memory leak tests across all pipelines and sizes."""
     
-    print("🔬 TEXY COMPREHENSIVE MEMORY LEAK DETECTION")
+    print("🔬 TEXY COMPREHENSIVE MEMORY LEAK DETECTION - MILLION SCALE")
     print("="*70)
     print("Testing memory behavior across different array sizes and complexities")
+    print("📈 Scale: From 50 items to 1,000,000 items")
+    print("🎯 Focus: Memory leaks, performance, and production readiness")
     print()
     
     # Import pipeline functions
@@ -276,8 +287,8 @@ def comprehensive_memory_test():
     init_cost = post_init_memory - initial_memory
     print(f"📊 Initialization cost: {init_cost:.2f} MB")
     
-    # Test configurations
-    test_sizes = [50, 100, 500, 1000, 2500, 5000]
+    # Test configurations - Million scale testing
+    test_sizes = [50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000]
     complexities = ["simple", "medium", "complex"]
     
     # Pipeline configurations
@@ -307,18 +318,41 @@ def comprehensive_memory_test():
         results = []
         
         for size in test_sizes:
-            for complexity in complexities:
+            # For very large sizes, only test simple complexity to avoid excessive runtime
+            if size >= 100000:
+                test_complexities = ["simple"]
+            elif size >= 10000:
+                test_complexities = ["simple", "medium"] 
+            else:
+                test_complexities = complexities
+                
+            for complexity in test_complexities:
                 test_data = generate_test_data(size, complexity)
                 test_name = f"{size} {complexity}"
                 
-                print(f"  Running {test_name}...", end=" ")
+                print(f"  Running {test_name}...")
                 result = run_single_test(pipeline_func, test_data, test_name)
                 results.append(result)
                 
+                print(f"        Size: {size:,} items ({complexity} complexity)")
+                print(f"        Time: {result['processing_time']:.3f}s")
+                print(f"        Peak increase: {result['peak_increase']:+.3f} MB")
+                print(f"        Net increase: {result['net_increase']:+.3f} MB")
+                if result['processing_time'] > 0:
+                    print(f"        Throughput: {size/result['processing_time']:,.0f} items/sec")
+                
                 if result['success']:
-                    print(f"✅ {result['net_increase']:+.3f}MB")
+                    if result['net_increase'] <= 0.1:
+                        print("        Status: ✅ EXCELLENT (≤0.1MB)")
+                    elif result['net_increase'] <= 1.0:
+                        print("        Status: ✅ GOOD (≤1.0MB)")
+                    elif result['net_increase'] <= 5.0:
+                        print("        Status: ⚠️ ACCEPTABLE (≤5.0MB)")
+                    else:
+                        print("        Status: ❌ POOR (>5.0MB)")
                 else:
-                    print(f"❌ Failed: {result['error']}")
+                    print(f"        Status: ❌ FAILED: {result['error']}")
+                print()  # Empty line for readability
         
         # Analyze results for this pipeline
         analysis = analyze_results(results)
@@ -339,21 +373,42 @@ def comprehensive_memory_test():
             print(f"\n📋 Testing {pipeline_name}...")
             results = []
             
-            # Use smaller sizes for Python pipelines to avoid hanging
-            python_test_sizes = [50, 100, 500, 1000]
+            # Use smaller sizes for Python pipelines to avoid hanging - Million scale skipped for Python
+            python_test_sizes = [50, 100, 500, 1000, 5000, 10000]
             
             for size in python_test_sizes:
-                test_data = generate_test_data(size, "medium")  # Use medium complexity only
-                test_name = f"{size} medium"
+                # For Python, use simple complexity for larger sizes
+                if size >= 5000:
+                    complexity = "simple"
+                else:
+                    complexity = "medium"
+                    
+                test_data = generate_test_data(size, complexity)
+                test_name = f"{size} {complexity}"
                 
-                print(f"  Running {test_name}...", end=" ")
+                print(f"  Running {test_name}...")
                 result = run_single_test(pipeline_func, test_data, test_name)
                 results.append(result)
                 
+                print(f"        Size: {size:,} items ({complexity} complexity)")
+                print(f"        Time: {result['processing_time']:.3f}s")
+                print(f"        Peak increase: {result['peak_increase']:+.3f} MB") 
+                print(f"        Net increase: {result['net_increase']:+.3f} MB")
+                if result['processing_time'] > 0:
+                    print(f"        Throughput: {size/result['processing_time']:,.0f} items/sec")
+                
                 if result['success']:
-                    print(f"✅ {result['net_increase']:+.3f}MB")
+                    if result['net_increase'] <= 0.1:
+                        print("        Status: ✅ EXCELLENT (≤0.1MB)")
+                    elif result['net_increase'] <= 1.0:
+                        print("        Status: ✅ GOOD (≤1.0MB)")
+                    elif result['net_increase'] <= 5.0:
+                        print("        Status: ⚠️ ACCEPTABLE (≤5.0MB)")
+                    else:
+                        print("        Status: ❌ POOR (>5.0MB)")
                 else:
-                    print(f"❌ Failed: {result['error']}")
+                    print(f"        Status: ❌ FAILED: {result['error']}")
+                print()  # Empty line for readability
             
             # Analyze results for this pipeline
             analysis = analyze_results(results)
