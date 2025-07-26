@@ -8,6 +8,7 @@ authors = [{ name = "Mamunur Rahaman Mamun", email = "mdmmn378@gmail.com" }]
 dependencies = [
     "psutil>=7.0.0",
     "memory-profiler>=0.61.0",
+    "maturin>=0.12.20",
 ]
 
 [project.scripts]

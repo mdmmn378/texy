@@ -3,97 +3,95 @@ use pyo3::prelude::*;
 
 #[allow(unused_assignments)]
 pub fn relaxed(items: Vec<String>) -> Vec<String> {
-    // Use sequential processing to avoid rayon thread pool memory retention
-    items
-        .into_iter()
-        .map(|elem| {
-            let elem = remove_newlines(elem);
-            let elem = remove_html(elem);
-            let elem = remove_xml(elem);
-            merge_spaces(elem)
-        })
-        .collect()
+    // Pre-allocate result vector with exact capacity to avoid reallocations
+    let mut result = Vec::with_capacity(items.len());
+
+    // Process items individually to minimize peak memory usage
+    for item in items {
+        let processed = {
+            let item = remove_newlines(item);
+            let item = remove_html(item);
+            let item = remove_xml(item);
+            merge_spaces(item)
+        };
+        result.push(processed);
+    }
+
+    // Shrink vector to exact size to free unused capacity
+    result.shrink_to_fit();
+    result
 }
 
 #[allow(unused_assignments)]
 pub fn strict(items: Vec<String>) -> Vec<String> {
-    // Simplified strict processing to identify leak source
-    items
-        .into_iter()
-        .map(|mut elem| {
-            // Test with minimal operations
-            elem = remove_newlines(elem);
-            elem = remove_urls(elem);
-            elem = remove_emails(elem);
-            // Skip potentially problematic operations
-            // elem = remove_html(elem);
-            // elem = remove_xml(elem);
-            // elem = remove_emojis(elem);
-            // elem = remove_infrequent_punctuations(elem);
-            merge_spaces(elem)
-        })
-        .collect()
+    // Pre-allocate result vector with exact capacity
+    let mut result = Vec::with_capacity(items.len());
+
+    // Process items individually for better memory control
+    for item in items {
+        let processed = {
+            let item = remove_newlines(item);
+            let item = remove_urls(item);
+            let item = remove_emails(item);
+            let item = remove_html(item);
+            let item = remove_xml(item);
+            let item = remove_emoticons(item);
+            let item = remove_emojis(item);
+            let item = remove_infrequent_punctuations(item);
+            merge_spaces(item)
+        };
+        result.push(processed);
+    }
+
+    // Shrink vector to exact size
+    result.shrink_to_fit();
+    result
 }
 
 #[allow(unused_assignments)]
 pub fn extreme(items: Vec<String>) -> Vec<String> {
-    // Use sequential processing to avoid rayon thread pool memory retention
-    items
-        .into_iter()
-        .map(|elem| {
-            let elem = remove_newlines(elem);
-            let elem = remove_urls(elem);
-            let elem = remove_emails(elem);
-            let elem = remove_html(elem);
-            let elem = remove_xml(elem);
-            let elem = remove_emoticons(elem);
-            let elem = remove_emojis(elem);
-            let elem = remove_all_punctuations(elem);
-            merge_spaces(elem)
-        })
-        .collect()
+    // Pre-allocate result vector with exact capacity
+    let mut result = Vec::with_capacity(items.len());
+
+    // Process items individually for optimal memory control
+    for item in items {
+        let processed = {
+            let item = remove_newlines(item);
+            let item = remove_urls(item);
+            let item = remove_emails(item);
+            let item = remove_html(item);
+            let item = remove_xml(item);
+            let item = remove_emoticons(item);
+            let item = remove_emojis(item);
+            let item = remove_all_punctuations(item);
+            merge_spaces(item)
+        };
+        result.push(processed);
+    }
+
+    // Shrink vector to exact size
+    result.shrink_to_fit();
+    result
 }
 
 #[pyfunction]
-pub fn relaxed_clean(py: Python<'_>, string_list: Vec<String>) -> PyResult<Vec<String>> {
-    // Ultra-aggressive memory management for PyO3
-    let result = py.allow_threads(|| {
-        // Process without intermediate cloning
-        relaxed(string_list)
-    });
-
-    // Multiple garbage collection calls
-    py.run("import gc; [gc.collect() for _ in range(3)]", None, None)?;
-
+pub fn relaxed_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
+    // Process directly without unnecessary Python GIL operations
+    let result = relaxed(string_list);
     Ok(result)
 }
 
 #[pyfunction]
-pub fn strict_clean(py: Python<'_>, string_list: Vec<String>) -> PyResult<Vec<String>> {
-    // Ultra-aggressive memory management for PyO3
-    let result = py.allow_threads(|| {
-        // Process without intermediate cloning
-        strict(string_list)
-    });
-
-    // Multiple garbage collection calls
-    py.run("import gc; [gc.collect() for _ in range(3)]", None, None)?;
-
+pub fn strict_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
+    // Process directly without unnecessary Python GIL operations
+    let result = strict(string_list);
     Ok(result)
 }
 
 #[pyfunction]
-pub fn extreme_clean(py: Python<'_>, string_list: Vec<String>) -> PyResult<Vec<String>> {
-    // Ultra-aggressive memory management for PyO3
-    let result = py.allow_threads(|| {
-        // Process without intermediate cloning
-        extreme(string_list)
-    });
-
-    // Multiple garbage collection calls
-    py.run("import gc; [gc.collect() for _ in range(3)]", None, None)?;
-    py.run("import gc; gc.collect()", None, None)?;
-
+pub fn extreme_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
+    // Process directly without unnecessary Python GIL operations
+    let result = extreme(string_list);
     Ok(result)
 }
 

@@ -13,132 +13,184 @@ lazy_static! {
     pub static ref RE_XML: Regex = Regex::new(r"<[/]?[^>]+>").unwrap();
 }
 
-pub fn remove_newlines(mut string: String) -> String {
-    // In-place replacement to avoid allocations
-    unsafe {
-        let bytes = string.as_mut_vec();
-        for byte in bytes.iter_mut() {
-            if *byte == b'\n' {
-                *byte = b' ';
-            }
-        }
+pub fn remove_newlines(string: String) -> String {
+    // Safe replacement without unsafe code
+    if !string.contains('\n') {
+        return string;
     }
-    string
+    string.replace('\n', " ")
 }
 
-pub fn remove_infrequent_punctuations(mut string: String) -> String {
+pub fn remove_infrequent_punctuations(string: String) -> String {
     let delete_chars = r##""#$%&\'*+<=>@\\^_{|}~`"##;
 
-    // Replace \xa0 first
-    if string.contains('\u{00a0}') {
-        string = string.replace('\u{00a0}', " ");
+    // Early return if no target characters
+    let has_target_chars = string.chars().any(|c| delete_chars.contains(c) || c == '\u{00a0}');
+    if !has_target_chars {
+        return string;
     }
 
-    // Filter characters in place to avoid allocations
-    string.retain(|c| !delete_chars.contains(c));
-    string
+    // Process characters efficiently
+    let mut result = String::with_capacity(string.len());
+    for c in string.chars() {
+        if c == '\u{00a0}' {
+            result.push(' ');
+        } else if !delete_chars.contains(c) {
+            result.push(c);
+        }
+        // Skip characters in delete_chars (effectively removing them)
+    }
+    
+    result
 }
 
 pub fn remove_all_punctuations(mut string: String) -> String {
-    let delete_chars = r##"!"#$%&\'()*+-/:;<=>?@[\\]^_{|}~`"##;
+    let delete_chars = r##"!"#$%&\'()*+-/:;<=>?@[\\]^_{|}~`,.`"##;
 
-    // Replace \xa0 first
+    // Replace \xa0 first if present
     if string.contains('\u{00a0}') {
         string = string.replace('\u{00a0}', " ");
     }
 
-    // Filter and replace in a single pass to minimize allocations
-    string.retain(|c| !delete_chars.contains(c) && c != ',' && c != '.');
-
-    // Replace remaining commas and periods with spaces in-place
-    unsafe {
-        let bytes = string.as_mut_vec();
-        for byte in bytes.iter_mut() {
-            if *byte == b',' || *byte == b'.' {
-                *byte = b' ';
-            }
-        }
+    // Check if string contains any punctuation to avoid unnecessary processing
+    let has_punctuation = string.chars().any(|c| delete_chars.contains(c));
+    if !has_punctuation {
+        return string;
     }
-    string
+
+    // Safe character filtering and replacement
+    string.chars()
+        .map(|c| {
+            if delete_chars.contains(c) {
+                ' '
+            } else {
+                c
+            }
+        })
+        .collect()
 }
 
-pub fn remove_bn_numbers(mut string: String) -> String {
-    let bn_nums = "০১৭২১৭৬৯৫৫০";
-    string.retain(|c| !bn_nums.contains(c));
-    string
+pub fn remove_bn_numbers(string: String) -> String {
+    // Bengali numbers: ০১২৩৪৫৬৭৮৯
+    let bn_digits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    
+    // Quick check if string contains any Bengali digits
+    let has_bn_digits = string.chars().any(|c| bn_digits.contains(&c));
+    if !has_bn_digits {
+        return string;
+    }
+    
+    // Filter out Bengali digits
+    string.chars().filter(|&c| !bn_digits.contains(&c)).collect()
 }
 
 pub fn unify_numbers(string: String) -> String {
     return string;
 }
 
-pub fn merge_spaces(mut string: String) -> String {
-    // Ultra-efficient in-place space merging
+pub fn merge_spaces(string: String) -> String {
     if string.is_empty() {
         return string;
     }
 
-    // Remove leading/trailing whitespace first
-    string = string.trim().to_string();
-
-    // In-place space merging using bytes for better performance
-    let mut bytes = string.into_bytes();
-    let mut write_pos = 0;
-    let mut prev_was_space = false;
-
-    for read_pos in 0..bytes.len() {
-        let byte = bytes[read_pos];
-        let is_space = byte == b' ' || byte == b'\t' || byte == b'\n' || byte == b'\r';
-
-        if is_space {
-            if !prev_was_space {
-                bytes[write_pos] = b' ';
-                write_pos += 1;
-                prev_was_space = true;
-            }
-        } else {
-            bytes[write_pos] = byte;
-            write_pos += 1;
-            prev_was_space = false;
-        }
+    // Quick check if any space merging is needed
+    let needs_processing = string.contains("  ") || 
+                          string.contains('\t') || 
+                          string.contains('\n') || 
+                          string.contains('\r') ||
+                          string.starts_with(' ') || 
+                          string.ends_with(' ');
+    
+    if !needs_processing {
+        return string;
     }
 
-    bytes.truncate(write_pos);
-    String::from_utf8(bytes).unwrap_or_default()
+    // Efficient space merging using split_whitespace and join
+    let words: Vec<&str> = string.split_whitespace().collect();
+    if words.is_empty() {
+        return String::new();
+    }
+    
+    words.join(" ")
 }
 
 pub fn remove_emojis(string: String) -> String {
-    // Use into_owned to avoid unnecessary cloning
-    RE_EMOJI.replace_all(&string, "").into_owned()
+    // Check if string contains emojis first to avoid unnecessary processing
+    if !string.chars().any(|c| c as u32 >= 0x1F300) {
+        return string;
+    }
+
+    // Use direct string replacement to avoid regex overhead for small strings
+    if string.len() < 100 {
+        // For small strings, use simple character filtering
+        string
+            .chars()
+            .filter(|&c| {
+                let code = c as u32;
+                !(code >= 0x1F300 && code <= 0x1F5FF)
+                    && !(code >= 0x1F600 && code <= 0x1F64F)
+                    && !(code >= 0x1F680 && code <= 0x1F6FF)
+                    && !(code >= 0x1F700 && code <= 0x1F77F)
+                    && !(code >= 0x1F780 && code <= 0x1F7FF)
+                    && !(code >= 0x1F800 && code <= 0x1F8FF)
+                    && !(code >= 0x1F900 && code <= 0x1F9FF)
+                    && !(code >= 0x1FA00 && code <= 0x1FA6F)
+                    && !(code >= 0x1FA70 && code <= 0x1FAFF)
+                    && !(code >= 0x2702 && code <= 0x27B0)
+            })
+            .collect()
+    } else {
+        // For larger strings, use regex but avoid cloning
+        RE_EMOJI.replace_all(&string, "").into_owned()
+    }
 }
 
 pub fn remove_emoticons(string: String) -> String {
-    // Super-efficient emoticon removal with minimal allocations
-    let emoticons = get_emoticons();
-
-    // Quick check - if string is too short, skip processing
+    // Quick length check - most emoticons are 2-3 characters
     if string.len() < 2 {
         return string;
     }
 
-    // Check if any emoticons exist in the string first
-    let has_emoticons = emoticons.iter().any(|emo| string.contains(emo));
-    if !has_emoticons {
-        return string; // No emoticons found, return original
+    // Quick scan to see if any emoticons might be present
+    let has_common_chars = string
+        .chars()
+        .any(|c| matches!(c, ':' | ';' | '(' | ')' | '-' | '=' | 'D' | 'P' | 'X' | '^' | 'T' | '_' | '>' | '<'));
+    if !has_common_chars {
+        return string; // No common emoticon characters found
     }
 
-    // Build a single replacement map and process once
+    // Store original length for comparison
+    let original_len = string.len();
     let mut result = string;
+    
+    // Use a more efficient replacement strategy with a single pass
+    let emoticons_to_replace = [
+        // Most common emoticons
+        ":)", ":(", ":D", ":P", ";)", ":-)", ":-(", ":-D", ":-P", ";-)",
+        "=)", "=(", "=D", "=P", ":o", ":-o", ":O", ":-O", ":|", ":-|",
+        // Additional common patterns
+        "XD", "xD", ":x", ":X", "^^", "T_T", ">:(", "<3", ":3", ";P",
+        ":S", ":s", ":'(", ":,(", ":-S", ":-s", "B)", "B-)", ":B", ":-B"
+    ];
 
-    // Sort emoticons by length (longest first) to avoid partial replacements
-    let mut sorted_emoticons: Vec<&str> = emoticons.iter().map(|s| s.as_ref()).collect();
-    sorted_emoticons.sort_by(|a, b| b.len().cmp(&a.len()));
-
-    // Process each emoticon only if it exists in the current string
-    for emo in sorted_emoticons.iter().take(50) {
-        // Limit to top 50 most common
+    // Process common emoticons with a single pass through the list
+    for emo in &emoticons_to_replace {
         if result.contains(emo) {
             result = result.replace(emo, " ");
+        }
+    }
+
+    // Only do additional processing if we have a moderate-sized string and found some emoticons
+    if result.len() < original_len && result.len() > 50 && result.len() < 1000 {
+        // Get full emoticons list for remaining processing, but limit scope
+        let emoticons = get_emoticons();
+        
+        // Process a limited set of additional emoticons
+        for emo in emoticons.iter().take(50) {
+            if emo.len() > 1 && emo.len() <= 4 && result.contains(emo) {
+                // Only process reasonable-length emoticons
+                result = result.replace(emo, " ");
+            }
         }
     }
 
@@ -146,17 +198,33 @@ pub fn remove_emoticons(string: String) -> String {
 }
 
 pub fn remove_urls(string: String) -> String {
+    // Quick check to avoid regex if no URLs are present
+    if !string.contains("http") {
+        return string;
+    }
     RE_URL.replace_all(&string, "").into_owned()
 }
 
 pub fn remove_emails(string: String) -> String {
+    // Quick check to avoid regex if no emails are present
+    if !string.contains('@') {
+        return string;
+    }
     RE_EMAIL.replace_all(&string, "").into_owned()
 }
 
 pub fn remove_html(string: String) -> String {
+    // Quick check to avoid regex if no HTML tags are present
+    if !string.contains('<') {
+        return string;
+    }
     RE_HTML.replace_all(&string, "").into_owned()
 }
 
 pub fn remove_xml(string: String) -> String {
+    // Quick check to avoid regex if no XML tags are present
+    if !string.contains('<') {
+        return string;
+    }
     RE_XML.replace_all(&string, "").into_owned()
 }
