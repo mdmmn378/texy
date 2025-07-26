@@ -9,6 +9,7 @@ fn texy(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(strict_clean, m)?)?;
     m.add_function(wrap_pyfunction!(relaxed_clean, m)?)?;
     m.add_function(wrap_pyfunction!(extreme_clean, m)?)?;
+    m.add_function(wrap_pyfunction!(pipelines::blocks::clean_all, m)?)?;
     // let submodule = PyModule::new(_py, "components")?;
     // submodule.add_function(wrap_pyfunction!(merge_spaces, submodule)?)?; // functions must take
     // submodule.add_function(wrap_pyfunction!(remove_dot_commas, submodule)?)?;

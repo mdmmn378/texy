@@ -1,3 +1,4 @@
+from concurrent.futures.thread import ThreadPoolExecutor
 import gc
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -6,6 +7,7 @@ from typing import Any, Callable, List, Tuple
 from .texy import extreme_clean as _extreme_clean
 from .texy import relaxed_clean as _relaxed_clean
 from .texy import strict_clean as _strict_clean
+from .texy import clean_all 
 
 
 def _apply_strategy(
@@ -91,8 +93,10 @@ def extreme_clean(data: List[str]) -> List[str]:
     """Extreme cleaning pipeline with aggressive memory management."""
     try:
         result = parallelize(_extreme_clean, data, 0)
+        # result = _extreme_clean(data)
         # Force immediate cleanup
         gc.collect()
+        # clean_all()
         return result
     finally:
         # Ensure cleanup even on exceptions
@@ -103,8 +107,10 @@ def strict_clean(data: List[str]) -> List[str]:
     """Strict cleaning pipeline with aggressive memory management."""
     try:
         result = parallelize(_strict_clean, data, 0)
+        # result = _strict_clean(data)
         # Force immediate cleanup
         gc.collect()
+        # clean_all()
         return result
     finally:
         # Ensure cleanup even on exceptions
@@ -115,8 +121,10 @@ def relaxed_clean(data: List[str]) -> List[str]:
     """Relaxed cleaning pipeline with aggressive memory management."""
     try:
         result = parallelize(_relaxed_clean, data, 0)
+        # result = _relaxed_clean(data)
         # Force immediate cleanup
         gc.collect()
+        # clean_all() 
         return result
     finally:
         # Ensure cleanup even on exceptions

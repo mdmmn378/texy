@@ -74,10 +74,21 @@ pub fn extreme(items: Vec<String>) -> Vec<String> {
     result
 }
 
+extern "C" {
+    fn malloc_trim(pad: usize) -> i32;
+}
+
+pub fn force_trim() {
+    unsafe {
+        malloc_trim(0);
+    }
+}
+
 #[pyfunction]
 pub fn relaxed_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
     // Process directly without unnecessary Python GIL operations
     let result = relaxed(string_list);
+    force_trim();
     Ok(result)
 }
 
@@ -85,6 +96,7 @@ pub fn relaxed_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
 pub fn strict_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
     // Process directly without unnecessary Python GIL operations
     let result = strict(string_list);
+    force_trim();
     Ok(result)
 }
 
@@ -92,9 +104,16 @@ pub fn strict_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
 pub fn extreme_clean(string_list: Vec<String>) -> PyResult<Vec<String>> {
     // Process directly without unnecessary Python GIL operations
     let result = extreme(string_list);
+    force_trim();
     Ok(result)
 }
 
+#[pyfunction]
+pub fn clean_all() -> PyResult<bool> {
+    // Process directly without unnecessary Python GIL operations
+    force_trim();
+    Ok(true)
+}
 // #[cfg(test)]
 // mod tests {
 
