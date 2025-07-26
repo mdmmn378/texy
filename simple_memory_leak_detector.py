@@ -305,7 +305,7 @@ def main():
     for i in range(5):
         collected = gc.collect()
         print(f"Final GC round {i+1}: collected {collected} objects")
-        time.sleep(0.5)
+        time.sleep(3)
     
     final_system_memory = tracker.get_memory_mb()
     total_memory_growth = final_system_memory - initial_system_memory
@@ -318,7 +318,7 @@ def main():
     print(f"Initial Process Memory: {initial_system_memory:.2f} MB")
     print(f"Final Process Memory: {final_system_memory:.2f} MB")
     print(f"Total Memory Growth: {total_memory_growth:+.2f} MB")
-    
+
     # Determine if there's a memory leak
     leak_threshold = 100  # MB
     has_leak = total_memory_growth > leak_threshold
@@ -345,6 +345,34 @@ def main():
                     print(f"   {func_name}: {func_result['duration']:.2f}s, "
                           f"{func_result['rate']:,.0f} items/sec")
     
+    # Add explanation of memory patterns
+    print(f"\n{'='*80}")
+    print("UNDERSTANDING MEMORY PATTERNS")
+    print(f"{'='*80}")
+    
+    print("""
+💡 Memory Growth Patterns Explained:
+
+Large Sample Sizes (1M, 500K):
+- Higher initial memory growth due to data creation
+- ProcessPool: Lower measured growth (worker memory isolated)
+- ThreadPool: Higher measured growth (shared memory space)
+
+Small Sample Sizes (100K, 10K):  
+- Lower data creation overhead
+- Better memory reuse from previous allocations
+- ThreadPool benefits from shared memory efficiency
+
+Memory Efficiency Factors:
+✅ Good: Growth < 50MB per test (reusing allocated memory)
+❌ Poor: Growth > 50MB per test (potential memory fragmentation)
+
+Performance vs Memory Trade-offs:
+- ThreadPool: Faster for small datasets, higher memory visibility
+- ProcessPool: More stable memory patterns, process isolation overhead
+- Sequential: Baseline performance, most predictable memory usage
+""")
+
     print(f"\n{'='*80}")
     print(f"FINAL VERDICT: {'MEMORY LEAK DETECTED' if has_leak else 'NO SIGNIFICANT MEMORY LEAK'}")
     print(f"{'='*80}")
